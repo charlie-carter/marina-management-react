@@ -1,9 +1,9 @@
 import React, { useState } from "react";
-import { AppBar, Toolbar, Typography, Drawer, List, ListItem, ListItemText, CssBaseline, Box, Button, Divider, ListItemButton } from "@mui/material";
+import { Toolbar, Typography, Drawer, List, ListItem, ListItemText, CssBaseline, Box, Button, Divider, ListItemButton } from "@mui/material";
 import GasCharges from "../pages/GasCharges";
 import ActiveGuestCarsPage from "../pages/ActiveGuestCarsPage.tsx";
 import AccountsPage from "../pages/AccountsPage.tsx";
-//import {useNavigate} from "react-router-dom";
+import {useNavigate} from "react-router-dom";
 
 const menuItems = [
     { label: "Parked Cars", key: "parkedCars", component: <ActiveGuestCarsPage /> },
@@ -13,11 +13,11 @@ const menuItems = [
 
 const Dashboard: React.FC = () => {
     const [selectedPage, setSelectedPage] = useState(menuItems[0].key);
-    //const navigate = useNavigate();
+    const navigate = useNavigate();
 
     const handleSignOut = () => {
         console.log("Signing out...");
-        //navigate("/login");
+        navigate("/login");
 
     };
 

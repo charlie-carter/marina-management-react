@@ -7,11 +7,13 @@ import '@fontsource/roboto/300.css';
 import '@fontsource/roboto/400.css';
 import '@fontsource/roboto/500.css';
 import '@fontsource/roboto/700.css';
+import {useNavigate} from "react-router-dom";
 
 const LoginPage: React.FC = () => {
     const [username, setUsername] = useState<string>("");
     const [password, setPassword] = useState<string>("");
     const [marina, setMarina] = useState<number>(0);
+    const navigate = useNavigate();
 
     const logos = [payneLogo, desmasdonsLogo, beaconLogo];
     const logoColour = ["#3272B4", "#223867", "#222674"];
@@ -19,6 +21,7 @@ const LoginPage: React.FC = () => {
     const handleLogin = (e: React.FormEvent<HTMLFormElement>): void => {
         e.preventDefault();
         console.log("Logging in with", username, password);
+        navigate('/dashboard');
     };
 
     const lightTheme = createTheme({
