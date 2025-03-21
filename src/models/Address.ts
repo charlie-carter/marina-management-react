@@ -1,14 +1,22 @@
+import {DocumentData} from "firebase/firestore";
+
 export class Address {
-    constructor(
-        public street1: string = "",
-        public street2: string = "",
-        public city: string = "",
-        public province: string = "",
-        public postalCode: string = "",
-        public country: string = ""
-    ) {}
+    public street: string;
+    public city: string;
+    public province: string;
+    public postalCode: string;
+    public country: string;
+
+    constructor(data: DocumentData) {
+        this.street = data.street || "";
+        this.city = data.city || "";
+        this.province = data.province || "";
+        this.postalCode = data.postal || "";
+        this.country = data.country || "";
+    }
+
 
     toString(): string {
-        return `${this.street1}${this.street2 ? ", " + this.street2 : ""}, ${this.city}, ${this.province} ${this.postalCode}, ${this.country}`.trim();
+        return `${this.street}, ${this.city}, ${this.province} ${this.postalCode}, ${this.country}`.trim();
     }
 }

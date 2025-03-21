@@ -4,11 +4,16 @@ import GasCharges from "../pages/GasCharges";
 import ActiveGuestCarsPage from "../pages/ActiveGuestCarsPage.tsx";
 import AccountsPage from "../pages/AccountsPage.tsx";
 import {useNavigate} from "react-router-dom";
+import TestFirestore from "./testFirestore.tsx";
+import AccountView from "./AccountView.tsx";
+
 
 const menuItems = [
     { label: "Parked Cars", key: "parkedCars", component: <ActiveGuestCarsPage /> },
     { label: "Recent Gas Charges", key: "gasCharges", component: <GasCharges /> },
     { label: "All Accounts", key: "accounts", component: <AccountsPage /> },
+    { label: "Firebase Testing", key: "fire", component: <TestFirestore /> },
+    { label: "Test Account View", key: "aView", component: <AccountView /> },
 ];
 
 const Dashboard: React.FC = () => {
