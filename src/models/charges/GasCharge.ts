@@ -1,22 +1,23 @@
+import { DocumentData } from "firebase/firestore";
 import {Charge} from "./Charge";
-import {Temporal} from "@js-temporal/polyfill";
+
 
 export class GasCharge implements Charge {
-    amount: number;
-    description: string;
-    date: Temporal.PlainDateTime;
+    public price: number;
+    public amount: number;
+    public rate: number;
+    public date: string;
+    public boat: string;
+    public pump: string;
 
 
-    constructor(
-        litres: number,
-        rate: number,
-        public boatPhoto?: string,
-        public pumpPhoto?: string,
-
-    ) {
-        this.amount = litres * rate;
-        this.description = "Gas";
-        this.date = Temporal.Now.plainDateTimeISO();
+    constructor(data: DocumentData) {
+        this.amount = data.amount;
+        this.rate = data.rate;
+        this.price = this.amount * this.rate;
+        this.date = data.date;
+        this.boat = data.boat || "";
+        this.pump = data.pump || "";
 
     }
 

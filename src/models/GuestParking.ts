@@ -5,7 +5,7 @@ import {GuestParkingCharge} from "./charges/GuestParkingCharge";
 
 
 
-export class GuestParking {
+export class ActiveGuestParking {
     daysParked: number;
     notes: string;
     dayArrived: Temporal.PlainDate;

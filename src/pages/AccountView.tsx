@@ -1,16 +1,17 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { db } from "../firebaseConfig";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, DocumentData } from "firebase/firestore";
 import { Box, Grid, List, ListItem, ListItemText, Paper, Typography } from "@mui/material";
-import { Account } from "../models/Account";  // Import the Account class
-import { Charge } from "../models/charges/Charge";  // Import Charge class
-import { Address } from "../models/Address";  // Import Address class
+import { Account } from "../models/Account";
+import { Charge } from "../models/charges/Charge";
+import { Address } from "../models/Address";
 
 const AccountView: React.FC = () => {
     const { id } = useParams(); // Get the account ID from the URL
     const [account, setAccount] = useState<Account | null>(null);
     const [loading, setLoading] = useState(true);
+    const [charges, setCharges] = useState<Charge[]>([]);
 
     useEffect(() => {
         const fetchAccount = async () => {
@@ -18,10 +19,11 @@ const AccountView: React.FC = () => {
             try {
                 const docRef = doc(db, "accounts", id);
                 const docSnap = await getDoc(docRef);
+
                 if (docSnap.exists()) {
                     const data = docSnap.data();
 
-                    // Transform Firestore data into an Account instance
+                    // Create an Account instance
                     const account = new Account(
                         data.fName,
                         data.lName,
@@ -30,15 +32,12 @@ const AccountView: React.FC = () => {
                         data.phone || ""
                     );
 
-                    // Add charges to account
-                    // if (data.charges && Array.isArray(data.charges)) {
-                    //     data.charges.forEach((chargeData: any) => {
-                    //         const charge = new Charge(chargeData.amount, chargeData.description);
-                    //         account.addCharge(charge);
-                    //     });
-                    // }
-
                     setAccount(account);
+
+                    // Fetch charges if there are references
+                    if (data.charges && Array.isArray(data.charges)) {
+                        fetchCharges(data.charges);
+                    }
                 } else {
                     console.error("No such account found!");
                 }
@@ -48,6 +47,20 @@ const AccountView: React.FC = () => {
                 setLoading(false);
             }
         };
+
+        const fetchCharges = async (chargeRefs: DocumentData[]) => {
+            const chargePromises = chargeRefs.map(async (ref) => {
+                if (ref && ref.id) {
+                    const chargeDoc = await getDoc(ref);
+                    return chargeDoc.exists() ? new Charge(chargeDoc.data()) : null; // Create gas or parking based on type
+                }
+                return null;
+            });
+
+            const chargesData = (await Promise.all(chargePromises)).filter(Boolean) as Charge[];
+            setCharges(chargesData);
+        };
+
         fetchAccount();
     }, [id]);
 
@@ -64,7 +77,9 @@ const AccountView: React.FC = () => {
                 <Grid item xs={12} sm={6} md={4}>
                     <Paper sx={{ p: 2 }}>
                         <Typography variant="h6">Customer Information</Typography>
-                        <Typography>Address: {account.address ? `${account.address.street}, ${account.address.city}, ${account.address.postalCode}` : "N/A"}</Typography>
+                        <Typography>
+                            Address: {account.address ? `${account.address.street}, ${account.address.city}, ${account.address.postalCode}` : "N/A"}
+                        </Typography>
                         <Typography>Phone: {account.phone}</Typography>
                         <Typography>Email: {account.email}</Typography>
                     </Paper>
@@ -74,8 +89,8 @@ const AccountView: React.FC = () => {
                     <Paper sx={{ p: 2 }}>
                         <Typography variant="h6">Recent Charges</Typography>
                         <List>
-                            {account.charges.length > 0 ? (
-                                account.charges.map((charge, index) => (
+                            {charges.length > 0 ? (
+                                charges.map((charge, index) => (
                                     <ListItem key={index} button onClick={() => console.log("Navigate to charge details")}>
                                         <ListItemText primary={`$${charge.amount}`} secondary={charge.description} />
                                     </ListItem>
