@@ -3,6 +3,8 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-d
 import LoginPage from "./pages/LoginPage";
 import Dashboard from "./pages/Dashboard";
 import AccountView from "./pages/AccountView.tsx";
+import CarDetails from "./pages/carDetails.tsx";
+import AddGuestCar from "./pages/AddGuestCar.tsx";
 
 const App: React.FC = () => {
     return (
@@ -12,6 +14,8 @@ const App: React.FC = () => {
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/account-view/:id" element={<AccountView />} />
+                <Route path="/car-details/:id" element={<CarDetails />} />
+                <Route path="/add-car" element={<AddGuestCar />} />
             </Routes>
         </Router>
     );

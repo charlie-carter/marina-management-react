@@ -9,6 +9,7 @@ export class GasCharge implements Charge {
     public date: string;
     public boat: string;
     public pump: string;
+    public type: string = "Gas Charge";
 
 
     constructor(data: DocumentData) {
@@ -18,6 +19,7 @@ export class GasCharge implements Charge {
         this.date = data.date;
         this.boat = data.boat || "";
         this.pump = data.pump || "";
+        console.log("Gas charge added " + data.id);
 
     }
 

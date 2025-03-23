@@ -10,13 +10,14 @@ export class GuestParkingCharge implements Charge {
     public date: string;
     public carRef: DocumentReference;  // Explicitly typed as a Firestore document reference
     public car?: Car;  // Optional property for the loaded car
+    public type: string = "Guest Parking Charge";
 
     constructor(data: DocumentData) {
         this.days = data.days;
         this.rate = data.rate;
         this.price = this.days * this.rate;
         this.date = data.date;
-        this.carRef = data.car; // Assuming `data.car` is a Firestore DocumentReference
+        this.carRef = data.car || null; // Assuming `data.car` is a Firestore DocumentReference
     }
 
     async loadCar() {

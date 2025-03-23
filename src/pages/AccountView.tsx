@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { db } from "../firebaseConfig";
-import { doc, getDoc, DocumentData } from "firebase/firestore";
+import { doc, getDoc, DocumentData, DocumentReference } from "firebase/firestore";
 import { Box, Grid, List, ListItem, ListItemText, Paper, Typography } from "@mui/material";
 import { Account } from "../models/Account";
 import { Charge } from "../models/charges/Charge";
 import { Address } from "../models/Address";
+import { GasCharge } from "../models/charges/GasCharge";
+import { GuestParkingCharge } from "../models/charges/GuestParkingCharge";
 
 const AccountView: React.FC = () => {
     const { id } = useParams(); // Get the account ID from the URL
@@ -51,14 +53,26 @@ const AccountView: React.FC = () => {
         const fetchCharges = async (chargeRefs: DocumentData[]) => {
             const chargePromises = chargeRefs.map(async (ref) => {
                 if (ref && ref.id) {
-                    const chargeDoc = await getDoc(ref);
-                    return chargeDoc.exists() ? new Charge(chargeDoc.data()) : null; // Create gas or parking based on type
+                    const chargeDoc = await getDoc(ref as DocumentReference);
+                    if (chargeDoc.exists()) {
+                        const data : DocumentData = chargeDoc.data() as DocumentData;
+                        if (data.type === "GAS") {
+                            return new GasCharge(chargeDoc.data);
+                        } else if (data.type === "GUEST_PARKING") {
+                            return new GuestParkingCharge(chargeDoc.data);
+                        }
+                    } else {
+                        return null;
+                    }
                 }
                 return null;
             });
 
+            
+
             const chargesData = (await Promise.all(chargePromises)).filter(Boolean) as Charge[];
             setCharges(chargesData);
+            
         };
 
         fetchAccount();
@@ -66,6 +80,8 @@ const AccountView: React.FC = () => {
 
     if (loading) return <Typography>Loading account details...</Typography>;
     if (!account) return <Typography>No account found.</Typography>;
+
+    console.log(charges);
 
     return (
         <Box sx={{ p: 3 }}>
@@ -91,8 +107,8 @@ const AccountView: React.FC = () => {
                         <List>
                             {charges.length > 0 ? (
                                 charges.map((charge, index) => (
-                                    <ListItem key={index} button onClick={() => console.log("Navigate to charge details")}>
-                                        <ListItemText primary={`$${charge.amount}`} secondary={charge.description} />
+                                    <ListItem key={index} >
+                                        <ListItemText primary={`$${charge.price}`} secondary={charge.type} />
                                     </ListItem>
                                 ))
                             ) : (
