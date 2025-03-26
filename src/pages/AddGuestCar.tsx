@@ -170,12 +170,13 @@ const AddGuestCar: React.FC = () => {
                 </FormControl>
 
                 {/* Date Pickers */}
-                <Box>
+                <Box sx={{ display: "flex", gap: 2, mt: 2 }}>
                     <LocalizationProvider dateAdapter={AdapterDayjs}>
                         <DesktopDatePicker 
                             label="Date Arrived" 
                             value={entryDate} 
                             onChange={(date) => setEntryDate(date || dayjs())} 
+                            
                         />
                         <DesktopDatePicker 
                             label="Expected Departure" 
