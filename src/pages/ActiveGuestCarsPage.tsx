@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { db } from "../firebaseConfig";
-import { collection, getDoc, onSnapshot } from "firebase/firestore";
+import { collection, DocumentData, DocumentSnapshot, getDoc, onSnapshot } from "firebase/firestore";
 import { Container, Typography, Paper, Grid, Button } from "@mui/material";
 import { DataGrid, GridColDef } from "@mui/x-data-grid";
 
@@ -23,10 +23,10 @@ const columns: GridColDef[] = [
     // },
     { field: "licensePlate", headerName: "License Plate", width: 150 },
     { field: "ownerName", headerName: "Owner Name", width: 180 },
-    { field: "colour", headerName: "Colour", width: 100 },
-    { field: "make", headerName: "Make", width: 100 },
-    { field: "type", headerName: "Type", width: 100 },
-    { field: "entryTime", headerName: "Entry Time", width: 120 },
+    { field: "carColour", headerName: "Colour", width: 100 },
+    { field: "carMake", headerName: "Make", width: 100 },
+    { field: "carType", headerName: "Type", width: 100 },
+    { field: "entryDateFormatted", headerName: "Entry Date", width: 130 },
     { field: "accountName", headerName: "Account", width: 200 },
 ];
 
@@ -36,34 +36,67 @@ const ActiveGuestCarsPage: React.FC = () => {
 
     useEffect(() => {
         const unsubscribe = onSnapshot(collection(db, "guestCars"), async (snapshot) => {
-          const carData = await Promise.all(
-            snapshot.docs.map(async (docSnapshot) => {
-              const car = docSnapshot.data();
-              let accountName = "No Account";
-    
-              // Check if the account field exists and is a Firestore document reference
-              if (car.account) {
-                try {
-                  const accountDoc = await getDoc(car.account);
-                  if (accountDoc.exists()) {
-                    const accountData = accountDoc.data();
-                    accountName = `${accountData.fName || ""} ${accountData.lName || ""}`.trim();
-                  }
-                } catch (error) {
-                  console.error("Error fetching account:", error);
-                }
-              }
-    
-              return {
-                id: docSnapshot.id,
-                ...car,
-                accountName, // ✅ Add the account's full name
-              };
-            })
-          );
-    
-          setGuestCars(carData);
+            const carData = await Promise.all(
+                snapshot.docs.map(async (docSnapshot) => {
+                    const car = docSnapshot.data();
+                    let accountName = "No Account";
+                    let carMake = "Unknown";
+                    let carType = "Unknown";
+                    let carColour = "Unknown";
+                    let licensePlate = "Unknown";
+                    let ownerName = "Unknown";
+                    let entryDateFormatted = "Unknown";
+        
+                    if (car.account) {
+                        try {
+                            const accountDoc = await getDoc(car.account);
+                            if (accountDoc.exists()) {
+                                const accountData = accountDoc.data();
+                                accountName = `${accountData.fName || ""} ${accountData.lName || ""}`.trim();
+                            }
+                        } catch (error) {
+                            console.error("Error fetching account:", error);
+                        }
+                    }
+        
+                    if (car.carRef) {
+                        try {
+                            const carDoc = await getDoc(car.carRef);
+                            if (carDoc.exists()) {
+                                const carInfo = carDoc.data();
+                                licensePlate = `${carInfo.licensePlate}`;
+                                carMake = `${carInfo.make}`;
+                                carType = `${carInfo.type}`;
+                                carColour = `${carInfo.colour}`;
+                                ownerName = `${carInfo.ownerName}`;
+                            }
+                        } catch (error) {
+                            console.error("Error fetching car:", error);
+                        }
+                    }
+        
+                    if (car.entryDate) {
+                        const entryDateObject = car.entryDate.toDate ? car.entryDate.toDate() : new Date(car.entryDate);
+                        entryDateFormatted = entryDateObject.toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
+                    }
+        
+                    return {
+                        id: docSnapshot.id,
+                        ...car,
+                        accountName,
+                        licensePlate,
+                        carMake,
+                        carType,
+                        carColour,
+                        ownerName,
+                        entryDateFormatted, 
+                    };
+                })
+            );
+        
+            setGuestCars(carData);
         });
+        
     
         return () => unsubscribe();
       }, []);
