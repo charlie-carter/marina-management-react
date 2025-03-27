@@ -1,9 +1,9 @@
-import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { db } from "../firebaseConfig";
-import { collection, DocumentData, DocumentSnapshot, getDoc, onSnapshot } from "firebase/firestore";
-import { Container, Typography, Paper, Grid, Button } from "@mui/material";
-import { DataGrid, GridColDef } from "@mui/x-data-grid";
+import React, {useEffect, useState} from "react";
+import {useNavigate} from "react-router-dom";
+import {db} from "../firebaseConfig";
+import {collection, DocumentData, DocumentSnapshot, getDoc, onSnapshot} from "firebase/firestore";
+import {Container, Typography, Paper, Grid, Button} from "@mui/material";
+import {DataGrid, GridColDef} from "@mui/x-data-grid";
 
 const columns: GridColDef[] = [
     // To add a photo field
@@ -21,13 +21,13 @@ const columns: GridColDef[] = [
     //     sortable: false,
     //     filterable: false,
     // },
-    { field: "licensePlate", headerName: "License Plate", width: 150 },
-    { field: "ownerName", headerName: "Owner Name", width: 180 },
-    { field: "carColour", headerName: "Colour", width: 100 },
-    { field: "carMake", headerName: "Make", width: 100 },
-    { field: "carType", headerName: "Type", width: 100 },
-    { field: "entryDateFormatted", headerName: "Entry Date", width: 130 },
-    { field: "accountName", headerName: "Account", width: 200 },
+    {field: "licensePlate", headerName: "License Plate", width: 150},
+    {field: "ownerName", headerName: "Owner Name", width: 180},
+    {field: "carColour", headerName: "Colour", width: 100},
+    {field: "carMake", headerName: "Make", width: 100},
+    {field: "carType", headerName: "Type", width: 100},
+    {field: "entryDateFormatted", headerName: "Entry Date", width: 130},
+    {field: "accountName", headerName: "Account", width: 200},
 ];
 
 const ActiveGuestCarsPage: React.FC = () => {
@@ -46,7 +46,7 @@ const ActiveGuestCarsPage: React.FC = () => {
                     let licensePlate = "Unknown";
                     let ownerName = "Unknown";
                     let entryDateFormatted = "Unknown";
-        
+
                     if (car.account) {
                         try {
                             const accountDoc = await getDoc(car.account);
@@ -58,7 +58,7 @@ const ActiveGuestCarsPage: React.FC = () => {
                             console.error("Error fetching account:", error);
                         }
                     }
-        
+
                     if (car.carRef) {
                         try {
                             const carDoc = await getDoc(car.carRef);
@@ -74,12 +74,16 @@ const ActiveGuestCarsPage: React.FC = () => {
                             console.error("Error fetching car:", error);
                         }
                     }
-        
+
                     if (car.entryDate) {
                         const entryDateObject = car.entryDate.toDate ? car.entryDate.toDate() : new Date(car.entryDate);
-                        entryDateFormatted = entryDateObject.toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
+                        entryDateFormatted = entryDateObject.toLocaleDateString("en-US", {
+                            year: "numeric",
+                            month: "long",
+                            day: "numeric"
+                        });
                     }
-        
+
                     return {
                         id: docSnapshot.id,
                         ...car,
@@ -89,45 +93,45 @@ const ActiveGuestCarsPage: React.FC = () => {
                         carType,
                         carColour,
                         ownerName,
-                        entryDateFormatted, 
+                        entryDateFormatted,
                     };
                 })
             );
-        
+
             setGuestCars(carData);
         });
-        
-    
+
+
         return () => unsubscribe();
-      }, []);
-    
+    }, []);
+
 
     return (
         <Container>
             <Typography variant="h4" gutterBottom>
                 Active Guest Parked Cars
             </Typography>
-            <Button variant="contained" color="primary" sx={{ mb: 2 }} onClick={() => navigate("/add-car")}>
+            <Button variant="contained" color="primary" sx={{mb: 2}} onClick={() => navigate("/add-car")}>
                 Add New Car
             </Button>
-            <Grid container spacing={2} sx={{ marginTop: 2 }}>
+            <Grid container spacing={2} sx={{marginTop: 2}}>
                 <Grid item xs={12}>
-                    <Paper sx={{ padding: 2 }}>
-                        <div style={{ height: 400, width: "100%" }}>
+                    <Paper sx={{padding: 2}}>
+                        <div style={{height: 400, width: "100%"}}>
                             <DataGrid
                                 rows={guestCars}
                                 columns={columns}
                                 pageSize={5}
                                 onRowClick={(params) => {
-                                    // Convert Firestore Timestamp to ISO string if necessary
-                                    const carData = {
-                                        ...params.row,
-                                        entryTime: params.row.entryTime?.toDate?.().toISOString() || params.row.entryTime,
-                                        account: params.row.account?.id || null, // Convert Firestore document reference to just the ID
-                                    };
+                                    const {carRef, ...rest} = params.row; // Extract non-serializable fields
 
-                                    navigate(`/car-details/${params.row.id}`, { state: carData });
+                                    const carData = carRef.id;
+
+                                    console.log(carRef.id);
+
+                                    navigate(`/car-details/${params.row.id}`, {state: carData});
                                 }}
+
                             />
 
                         </div>
