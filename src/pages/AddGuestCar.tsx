@@ -1,13 +1,27 @@
-import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { db } from "../firebaseConfig";
-import { collection, addDoc, doc, getDoc, setDoc, query, where, getDocs } from "firebase/firestore";
-import { Container, TextField, Button, Typography, Paper, MenuItem, Select, FormControl, InputLabel, Box } from "@mui/material";
+import React, {useState, useEffect} from "react";
+import {useNavigate} from "react-router-dom";
+import {db} from "../firebaseConfig";
+import {collection, addDoc, doc, getDoc, setDoc, query, where, getDocs} from "firebase/firestore";
+import {green, pink} from '@mui/material/colors';
+import {
+    Container,
+    TextField,
+    Button,
+    Typography,
+    Paper,
+    MenuItem,
+    Select,
+    FormControl,
+    InputLabel,
+    Box,
+    FormControlLabel, Checkbox
+} from "@mui/material";
 import dayjs from 'dayjs';
-import { commonCarMakes } from "../assets/CarBrands";
-import { DesktopDatePicker } from '@mui/x-date-pickers';
-import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
-import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import {commonCarMakes} from "../assets/CarBrands";
+import {DesktopDatePicker} from '@mui/x-date-pickers';
+import {AdapterDayjs} from '@mui/x-date-pickers/AdapterDayjs';
+import {LocalizationProvider} from "@mui/x-date-pickers/LocalizationProvider";
+import { MuiTelInput } from 'mui-tel-input'
 
 const carColours = ["Black", "White", "Silver", "Grey", "Blue", "Red", "Green", "Yellow", "Beige"];
 const carTypes = ["Sedan", "SUV", "Truck", "Minivan", "Van"];
@@ -15,6 +29,7 @@ const carTypes = ["Sedan", "SUV", "Truck", "Minivan", "Van"];
 const AddGuestCar: React.FC = () => {
     const [licensePlate, setLicensePlate] = useState("");
     const [ownerName, setOwnerName] = useState("");
+    const [ownerContact, setOwnerContact] = useState("");
     const [selectedMake, setSelectedMake] = useState("");
     const [selectedType, setSelectedModel] = useState("");
     const [selectedColour, setSelectedColour] = useState("");
@@ -22,6 +37,9 @@ const AddGuestCar: React.FC = () => {
     const [selectedAccount, setSelectedAccount] = useState("");
     const [entryDate, setEntryDate] = useState(dayjs());
     const [exitDate, setExitDate] = useState<dayjs.Dayjs | null>(null);
+    const [onAccount, setOnAccount] = useState(false);
+    const [prepaid, setPrepaid] = useState(false);
+    const [daysPaid, setDaysPaid] = useState("");
 
     const navigate = useNavigate();
     const carMakes = commonCarMakes;
@@ -29,7 +47,7 @@ const AddGuestCar: React.FC = () => {
     useEffect(() => {
         const fetchAccounts = async () => {
             const querySnapshot = await getDocs(collection(db, "accounts"));
-            const accountData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            const accountData = querySnapshot.docs.map(doc => ({id: doc.id, ...doc.data()}));
             setAccounts(accountData);
         };
 
@@ -49,11 +67,13 @@ const AddGuestCar: React.FC = () => {
                 setSelectedMake(carData.make);
                 setSelectedModel(carData.type);
                 setSelectedColour(carData.colour);
+                setOwnerContact(carData.contactInfo);
             } else {
                 setOwnerName("");
                 setSelectedMake("");
                 setSelectedModel("");
                 setSelectedColour("");
+                setOwnerContact("");
             }
         }
     };
@@ -77,7 +97,8 @@ const AddGuestCar: React.FC = () => {
                     ownerName,
                     make: selectedMake,
                     type: selectedType,
-                    colour: selectedColour
+                    colour: selectedColour,
+                    contactInfo: ownerContact
                 });
                 carRef = newCarRef;
             }
@@ -90,6 +111,9 @@ const AddGuestCar: React.FC = () => {
                 daysStayed: 1,
                 account: selectedAccount ? doc(db, "accounts", selectedAccount) : null,
                 active: true,
+                prepaid: prepaid,
+                onAccount: onAccount,
+                prepaidDays: prepaid ? daysPaid : 0,
             };
 
             await addDoc(collection(db, "guestCars"), guestCarData);
@@ -102,24 +126,38 @@ const AddGuestCar: React.FC = () => {
 
     return (
         <Container>
-            <Paper sx={{ p: 3, mt: 3 }}>
+            <Paper sx={{p: 3, mt: 3}}>
                 <Typography variant="h5" gutterBottom>
                     Add New Guest Car
                 </Typography>
-                <TextField 
-                    label="License Plate" 
-                    fullWidth 
-                    margin="normal" 
-                    value={licensePlate} 
-                    onChange={(e) => handleLicensePlateChange(e.target.value)} 
+                <TextField
+                    label="License Plate"
+                    fullWidth
+                    margin="normal"
+                    value={licensePlate}
+                    onChange={(e) => handleLicensePlateChange(e.target.value)}
                 />
-                <TextField 
-                    label="Owner Name" 
-                    fullWidth 
-                    margin="normal" 
-                    value={ownerName} 
-                    onChange={(e) => setOwnerName(e.target.value)} 
-                />
+
+                <Box>
+                    <TextField
+                        label="Owner Name"
+                        sx={{width: '50%'}}
+                        margin="normal"
+                        value={ownerName}
+                        onChange={(e) => setOwnerName(e.target.value)}
+                    />
+
+                    <MuiTelInput
+                        label="Owner Contact"
+                        defaultCountry='CA'
+                        sx={{width: '49%', ml: '10px'}}
+                        margin="normal"
+                        value={ownerContact}
+                        onChange={(value) => {setOwnerContact(value)}}
+                    />
+
+                </Box>
+
 
                 {/* Select Car Make */}
                 <FormControl fullWidth margin="normal">
@@ -158,6 +196,7 @@ const AddGuestCar: React.FC = () => {
                 </FormControl>
 
                 {/* Select Account */}
+
                 <FormControl fullWidth margin="normal">
                     <InputLabel>Account (Optional)</InputLabel>
                     <Select value={selectedAccount} onChange={(e) => setSelectedAccount(e.target.value)}>
@@ -170,25 +209,62 @@ const AddGuestCar: React.FC = () => {
                 </FormControl>
 
                 {/* Date Pickers */}
-                <Box sx={{ display: "flex", gap: 2, mt: 2 }}>
+                <Box sx={{display: "flex", gap: 2, mt: 2}}>
                     <LocalizationProvider dateAdapter={AdapterDayjs}>
-                        <DesktopDatePicker 
-                            label="Date Arrived" 
-                            value={entryDate} 
-                            onChange={(date) => setEntryDate(date || dayjs())} 
-                            
+                        <DesktopDatePicker
+                            label="Date Arrived"
+                            value={entryDate}
+                            onChange={(date) => setEntryDate(date || dayjs())}
+
                         />
-                        <DesktopDatePicker 
-                            label="Expected Departure" 
-                            value={exitDate} 
-                            onChange={(date) => setExitDate(date)} 
+                        <DesktopDatePicker
+                            label="Expected Departure"
+                            value={exitDate}
+                            onChange={(date) => setExitDate(date)}
                         />
                     </LocalizationProvider>
+
+                    <FormControlLabel
+                        control={
+                            <Checkbox
+                                size='large'
+                                checked={prepaid}
+                                onChange={(e) => {setPrepaid(e.target.checked)}}
+                                color='info'
+                                disabled={onAccount}
+                            />
+                        }
+                        label="Prepaid?"
+                    />
+                    {prepaid?
+                        <TextField
+                            label="Days Paid For"
+                            onChange={(e) => {setDaysPaid(e.target.value)}}
+                            type='number'
+                        /> : <FormControlLabel
+                        control={
+                            <Checkbox
+                                size='large'
+                                checked={onAccount}
+                                onChange={(e) => {setOnAccount(e.target.checked)}}
+                                color='info'
+                            />}
+                        label="On Account?"
+                    />}
+
                 </Box>
 
-                <Button variant="contained" color="primary" sx={{ mt: 2 }} onClick={handleAddCar}>
-                    Save Car
-                </Button>
+                <Box >
+                    <Button variant="contained" color="primary" sx={{mt: 2, mr: 1}} onClick={handleAddCar}>
+                        Save Car
+                    </Button>
+
+                    <Button variant="outlined" color="primary" sx={{mt: 2, ml: 1}} onClick={() => {navigate(`/dashboard`)}}>
+                        Cancel
+                    </Button>
+
+                </Box>
+
             </Paper>
         </Container>
     );

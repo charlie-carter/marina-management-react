@@ -123,15 +123,8 @@ const ActiveGuestCarsPage: React.FC = () => {
                                 columns={columns}
                                 pageSize={5}
                                 onRowClick={(params) => {
-                                    const {carRef, ...rest} = params.row; // Extract non-serializable fields
-
-                                    const carData = carRef.id;
-
-                                    console.log(carRef.id);
-
-                                    navigate(`/car-details/${params.row.id}`, {state: carData});
+                                    navigate(`/car-details/${params.row.id}`, { state: { parkingId: params.row.id } });
                                 }}
-
                             />
 
                         </div>
