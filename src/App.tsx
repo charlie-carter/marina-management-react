@@ -5,6 +5,7 @@ import Dashboard from "./pages/Dashboard";
 import AccountView from "./pages/AccountView.tsx";
 import ParkingDetails from "./pages/ParkingDetails.tsx";
 import AddGuestCar from "./pages/AddGuestCar.tsx";
+import AddAccount from "./pages/AddAccount.tsx";
 
 const App: React.FC = () => {
     return (
@@ -16,6 +17,7 @@ const App: React.FC = () => {
                 <Route path="/account-view/:id" element={<AccountView />} />
                 <Route path="/car-details/:id" element={<ParkingDetails />} />
                 <Route path="/add-car" element={<AddGuestCar />} />
+                <Route path="/add-account" element={<AddAccount />} />
             </Routes>
         </Router>
     );

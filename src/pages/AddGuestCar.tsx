@@ -40,6 +40,8 @@ const AddGuestCar: React.FC = () => {
     const [onAccount, setOnAccount] = useState(false);
     const [prepaid, setPrepaid] = useState(false);
     const [daysPaid, setDaysPaid] = useState("");
+    const [notes, setNotes] = useState("");
+    const [lastAccount, setLastAccount] = useState("")
 
     const navigate = useNavigate();
     const carMakes = commonCarMakes;
@@ -68,12 +70,17 @@ const AddGuestCar: React.FC = () => {
                 setSelectedModel(carData.type);
                 setSelectedColour(carData.colour);
                 setOwnerContact(carData.contactInfo);
+                setNotes(carData.notes);
+                setLastAccount(carData.lastKnownAccount.id);
+
             } else {
                 setOwnerName("");
                 setSelectedMake("");
                 setSelectedModel("");
                 setSelectedColour("");
                 setOwnerContact("");
+                setLastAccount("");
+                setNotes("");
             }
         }
     };
@@ -81,14 +88,18 @@ const AddGuestCar: React.FC = () => {
     const handleAddCar = async () => {
         try {
             let carRef;
+            let existingCarData = null;
 
             // Check if car exists in "cars" collection
             const carQuery = query(collection(db, "cars"), where("licensePlate", "==", licensePlate));
             const querySnapshot = await getDocs(carQuery);
 
             if (!querySnapshot.empty) {
+
                 // Car exists, use its reference
-                carRef = doc(db, "cars", querySnapshot.docs[0].id);
+                const existingCarDoc = querySnapshot.docs[0];
+                carRef = doc(db, "cars", existingCarDoc.id);
+                existingCarData = existingCarDoc.data(); // Store existing car data
             } else {
                 // Car doesn't exist, create new document
                 const newCarRef = doc(collection(db, "cars"));
@@ -98,9 +109,24 @@ const AddGuestCar: React.FC = () => {
                     make: selectedMake,
                     type: selectedType,
                     colour: selectedColour,
-                    contactInfo: ownerContact
+                    contactInfo: ownerContact,
+                    notes: notes,
+                    lastKnownAccount: selectedAccount
                 });
                 carRef = newCarRef;
+            }
+
+            // If car exists, update its notes & lastKnownAccount if needed
+            const updatedFields: Record<string, any> = {};
+            if (existingCarData) {
+                if (existingCarData.notes !== notes) updatedFields.notes = notes;
+                if (selectedAccount && existingCarData.lastKnownAccount?.id !== selectedAccount) {
+                    updatedFields.lastKnownAccount = doc(db, "accounts", selectedAccount);
+                }
+
+                if (Object.keys(updatedFields).length > 0) {
+                    await setDoc(carRef, updatedFields, { merge: true });
+                }
             }
 
             // Add guest car entry referencing the car
@@ -135,7 +161,7 @@ const AddGuestCar: React.FC = () => {
                     fullWidth
                     margin="normal"
                     value={licensePlate}
-                    onChange={(e) => handleLicensePlateChange(e.target.value)}
+                    onChange={(e) => handleLicensePlateChange(e.target.value.toUpperCase())}
                 />
 
                 <Box>
@@ -195,6 +221,14 @@ const AddGuestCar: React.FC = () => {
                     </Select>
                 </FormControl>
 
+                <TextField
+                    label="Additional Notes"
+                    sx={{width: '100%'}}
+                    margin="normal"
+                    value={notes}
+                    onChange={(e) => setNotes(e.target.value)}
+                />
+
                 {/* Select Account */}
 
                 <FormControl fullWidth margin="normal">
@@ -207,6 +241,7 @@ const AddGuestCar: React.FC = () => {
                         ))}
                     </Select>
                 </FormControl>
+                <Typography>Last known account: {lastAccount ? lastAccount : "Unknown"}</Typography>
 
                 {/* Date Pickers */}
                 <Box sx={{display: "flex", gap: 2, mt: 2}}>

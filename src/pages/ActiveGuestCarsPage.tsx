@@ -37,70 +37,75 @@ const ActiveGuestCarsPage: React.FC = () => {
     useEffect(() => {
         const unsubscribe = onSnapshot(collection(db, "guestCars"), async (snapshot) => {
             const carData = await Promise.all(
-                snapshot.docs.map(async (docSnapshot) => {
-                    const car = docSnapshot.data();
-                    let accountName = "No Account";
-                    let carMake = "Unknown";
-                    let carType = "Unknown";
-                    let carColour = "Unknown";
-                    let licensePlate = "Unknown";
-                    let ownerName = "Unknown";
-                    let entryDateFormatted = "Unknown";
+                snapshot.docs
+                    .map(async (docSnapshot) => {
+                        const car = docSnapshot.data();
 
-                    if (car.account) {
-                        try {
-                            const accountDoc = await getDoc(car.account);
-                            if (accountDoc.exists()) {
-                                const accountData = accountDoc.data();
-                                accountName = `${accountData.fName || ""} ${accountData.lName || ""}`.trim();
+                        // Ignore inactive cars
+                        if (car.active === false) return null;
+
+                        let accountName = "No Account";
+                        let carMake = "Unknown";
+                        let carType = "Unknown";
+                        let carColour = "Unknown";
+                        let licensePlate = "Unknown";
+                        let ownerName = "Unknown";
+                        let entryDateFormatted = "Unknown";
+
+                        if (car.account) {
+                            try {
+                                const accountDoc = await getDoc(car.account);
+                                if (accountDoc.exists()) {
+                                    const accountData = accountDoc.data();
+                                    accountName = `${accountData.fName || ""} ${accountData.lName || ""}`.trim();
+                                }
+                            } catch (error) {
+                                console.error("Error fetching account:", error);
                             }
-                        } catch (error) {
-                            console.error("Error fetching account:", error);
                         }
-                    }
 
-                    if (car.carRef) {
-                        try {
-                            const carDoc = await getDoc(car.carRef);
-                            if (carDoc.exists()) {
-                                const carInfo = carDoc.data();
-                                licensePlate = `${carInfo.licensePlate}`;
-                                carMake = `${carInfo.make}`;
-                                carType = `${carInfo.type}`;
-                                carColour = `${carInfo.colour}`;
-                                ownerName = `${carInfo.ownerName}`;
+                        if (car.carRef) {
+                            try {
+                                const carDoc = await getDoc(car.carRef);
+                                if (carDoc.exists()) {
+                                    const carInfo = carDoc.data();
+                                    licensePlate = `${carInfo.licensePlate}`;
+                                    carMake = `${carInfo.make}`;
+                                    carType = `${carInfo.type}`;
+                                    carColour = `${carInfo.colour}`;
+                                    ownerName = `${carInfo.ownerName}`;
+                                }
+                            } catch (error) {
+                                console.error("Error fetching car:", error);
                             }
-                        } catch (error) {
-                            console.error("Error fetching car:", error);
                         }
-                    }
 
-                    if (car.entryDate) {
-                        const entryDateObject = car.entryDate.toDate ? car.entryDate.toDate() : new Date(car.entryDate);
-                        entryDateFormatted = entryDateObject.toLocaleDateString("en-US", {
-                            year: "numeric",
-                            month: "long",
-                            day: "numeric"
-                        });
-                    }
+                        if (car.entryDate) {
+                            const entryDateObject = car.entryDate.toDate ? car.entryDate.toDate() : new Date(car.entryDate);
+                            entryDateFormatted = entryDateObject.toLocaleDateString("en-US", {
+                                year: "numeric",
+                                month: "long",
+                                day: "numeric"
+                            });
+                        }
 
-                    return {
-                        id: docSnapshot.id,
-                        ...car,
-                        accountName,
-                        licensePlate,
-                        carMake,
-                        carType,
-                        carColour,
-                        ownerName,
-                        entryDateFormatted,
-                    };
-                })
+                        return {
+                            id: docSnapshot.id,
+                            ...car,
+                            accountName,
+                            licensePlate,
+                            carMake,
+                            carType,
+                            carColour,
+                            ownerName,
+                            entryDateFormatted,
+                        };
+                    })
             );
 
-            setGuestCars(carData);
+            // Filter out null values (inactive cars)
+            setGuestCars(carData.filter(car => car !== null));
         });
-
 
         return () => unsubscribe();
     }, []);
@@ -111,7 +116,7 @@ const ActiveGuestCarsPage: React.FC = () => {
             <Typography variant="h4" gutterBottom>
                 Active Guest Parked Cars
             </Typography>
-            <Button variant="contained" color="primary" sx={{mb: 2}} onClick={() => navigate("/add-car")}>
+            <Button variant="contained" color="primary" size='large' sx={{mb: 2}} onClick={() => navigate("/add-car")}>
                 Add New Car
             </Button>
             <Grid container spacing={2} sx={{marginTop: 2}}>
@@ -121,7 +126,14 @@ const ActiveGuestCarsPage: React.FC = () => {
                             <DataGrid
                                 rows={guestCars}
                                 columns={columns}
-                                pageSize={5}
+                                initialState={{
+                                    pagination: {
+                                        paginationModel: {
+                                            pageSize: 20,
+                                        },
+                                    },
+                                }}
+                                pageSizeOptions={[20]}
                                 onRowClick={(params) => {
                                     navigate(`/car-details/${params.row.id}`, { state: { parkingId: params.row.id } });
                                 }}

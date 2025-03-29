@@ -4,12 +4,14 @@ import GasCharges from "../pages/GasCharges";
 import ActiveGuestCarsPage from "../pages/ActiveGuestCarsPage.tsx";
 import AccountsPage from "../pages/AccountsPage.tsx";
 import {useNavigate} from "react-router-dom";
+import ParkingArchive from "./ParkingArchive.tsx";
 
 
 const menuItems = [
     { label: "Actively Parked Cars", key: "parkedCars", component: <ActiveGuestCarsPage /> },
     { label: "Recent Gas Charges", key: "gasCharges", component: <GasCharges /> },
     { label: "All Accounts", key: "accounts", component: <AccountsPage /> },
+    { label: "Parking Archive", key: "archive", component: <ParkingArchive /> },
 
 ];
 
@@ -35,7 +37,11 @@ const Dashboard: React.FC = () => {
                     <List>
                         {menuItems.map((item) => (
                             <ListItem key={item.key}>
-                                <ListItemButton onClick={() => setSelectedPage(item.key)} sx={{ "&:hover": { backgroundColor: "#f0f0f0" } }}>
+                                <ListItemButton onClick={() => setSelectedPage(item.key)} sx={{
+                                    "&:hover": { backgroundColor: "#f0f0f0" },
+                                    backgroundColor: selectedPage === item.key ? "#d0e7ff" : "transparent",
+                                    borderRadius: 2
+                                }}>
                                     <ListItemText primary={item.label} />
                                 </ListItemButton>
                             </ListItem>
