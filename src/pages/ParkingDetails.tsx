@@ -1,12 +1,11 @@
 import React, { useEffect, useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import {Link, useLocation, useNavigate} from "react-router-dom";
 import {
     Container,
     Typography,
     Paper,
     Button,
     Box,
-    ButtonGroup,
     Dialog,
     DialogTitle,
     DialogContent, DialogContentText, DialogActions, TextField
@@ -16,7 +15,7 @@ import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { db } from "../firebaseConfig";
 import {AdapterDayjs} from "@mui/x-date-pickers/AdapterDayjs";
 import {DesktopDatePicker} from "@mui/x-date-pickers";
-import dayjs, {Dayjs, isDayjs} from "dayjs";
+import dayjs from "dayjs";
 import {LocalizationProvider} from "@mui/x-date-pickers/LocalizationProvider";
 
 const ParkingDetails: React.FC = () => {
@@ -127,7 +126,7 @@ const ParkingDetails: React.FC = () => {
             if (parkingSnap.exists()) {
                 await updateDoc(parkingRef, {
                     active: false,
-                    exitDate: exitDate
+                    exitDate: exitDate.toISOString()
                 });
 
             }
@@ -191,13 +190,20 @@ const ParkingDetails: React.FC = () => {
 
     const paidDetails = () => {
         if (parking.prepaid) {
-            return "Paid for " + parking.prepaidDays + " days.";
-        } else if (parking.onAccount) {
-            return "To be charged on account: " + parking.account.id;
+            return `Paid for ${parking.prepaidDays} days.`;
+        } else if (parking.onAccount && parking.account?.id) {
+            return (
+                <span>
+                To be charged on account:{" "}
+                    <Link to={`/account-view/${parking.account.id}`}>
+                    {parking.account.id}
+                </Link>
+            </span>
+            );
         } else {
-            return "Unpaid for"
+            return "Unpaid for";
         }
-    }
+    };
 
     const paidWarning = () => {
         if (parking.onAccount) {
@@ -225,12 +231,7 @@ const ParkingDetails: React.FC = () => {
         );
     }
 
-    const entryDateObject = car.entryDate?.toDate ? car.entryDate.toDate() : new Date(car.entryDate);
-    const entryDateFormatted = entryDateObject.toLocaleDateString("en-US", {
-        year: "numeric",
-        month: "long",
-        day: "numeric"
-    });
+
 
     return (
         <Container sx={{ py: 4 }}>

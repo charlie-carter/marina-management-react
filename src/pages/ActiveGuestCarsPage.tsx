@@ -1,7 +1,7 @@
 import React, {useEffect, useState} from "react";
 import {useNavigate} from "react-router-dom";
 import {db} from "../firebaseConfig";
-import {collection, DocumentData, DocumentSnapshot, getDoc, onSnapshot} from "firebase/firestore";
+import {collection, getDoc, onSnapshot} from "firebase/firestore";
 import {Container, Typography, Paper, Grid, Button} from "@mui/material";
 import {DataGrid, GridColDef} from "@mui/x-data-grid";
 

@@ -1,8 +1,7 @@
 import React, {useEffect, useState} from "react";
-import {useNavigate} from "react-router-dom";
 import {db} from "../firebaseConfig";
-import {collection, DocumentData, DocumentSnapshot, getDoc, onSnapshot} from "firebase/firestore";
-import {Container, Typography, Paper, Grid, Button} from "@mui/material";
+import {collection, getDoc, onSnapshot} from "firebase/firestore";
+import {Container, Typography, Paper} from "@mui/material";
 import {DataGrid, GridColDef} from "@mui/x-data-grid";
 
 const columns: GridColDef[] = [
@@ -18,7 +17,6 @@ const columns: GridColDef[] = [
 
 const ParkingArchive: React.FC = () => {
     const [guestCars, setGuestCars] = useState<any[]>([]);
-    const navigate = useNavigate();
 
     useEffect(() => {
         const unsubscribe = onSnapshot(collection(db, "guestCars"), async (snapshot) => {

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { collection, addDoc } from "firebase/firestore";
+import {collection, addDoc, doc, setDoc, getDoc} from "firebase/firestore";
 import { db } from "../firebaseConfig"; // Ensure this is your Firebase config
 import { TextField, Button, Container, Typography, Paper, Box } from "@mui/material";
 import {MuiTelInput} from "mui-tel-input";
@@ -29,23 +29,34 @@ const AddAccount = () => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
     };
 
-    // Handle form submission
     const handleSubmit = async () => {
         setLoading(true);
         setError("");
 
         const { fName, lName, phone, email, street, city, province, country, postalCode } = formData;
 
-        // Validation: Ensure required fields are filled
-        if (!fName || !lName || !phone ) {
-            setError("Please fill in all fields.");
+        if (!fName || !lName || !phone) {
+            setError("Please fill in all required fields.");
             setLoading(false);
             return;
         }
 
         try {
-            // Save to Firebase
-            await addDoc(collection(db, "accounts"), {
+            const baseId = (fName + lName).toLowerCase().replace(/\s+/g, "");
+            let uniqueId = baseId;
+            let counter = 1;
+
+            // Check for uniqueness
+            while (true) {
+                const docRef = doc(db, "accounts", uniqueId);
+                const docSnap = await getDoc(docRef);
+                if (!docSnap.exists()) break;
+                uniqueId = `${baseId}${counter}`;
+                counter++;
+            }
+
+            // Save document
+            await setDoc(doc(db, "accounts", uniqueId), {
                 fName,
                 lName,
                 phone,
@@ -59,7 +70,7 @@ const AddAccount = () => {
                 },
             });
 
-            navigate("/dashboard"); // Navigate to dashboard after success
+            navigate("/dashboard");
         } catch (err) {
             setError("Error adding account. Please try again.");
             console.error("Firebase Error:", err);
