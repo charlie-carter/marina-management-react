@@ -1,39 +1,42 @@
 import React, { useState } from 'react';
-import { Container, TextField, Button, Typography, Box, Select, MenuItem, createTheme, ThemeProvider } from '@mui/material';
+import {
+    Container, TextField, Button, Typography, Box, Select, MenuItem,
+    createTheme, ThemeProvider
+} from '@mui/material';
 import payneLogo from "../assets/payne-logo.png";
 import beaconLogo from "../assets/beacon-logo.png";
 import desmasdonsLogo from "../assets/desmasdons-logo.png";
-import '@fontsource/roboto/300.css';
-import '@fontsource/roboto/400.css';
-import '@fontsource/roboto/500.css';
-import '@fontsource/roboto/700.css';
-import {useNavigate} from "react-router-dom";
+import '@fontsource/roboto';
+import { useNavigate } from "react-router-dom";
+import { signInWithEmailAndPassword } from "firebase/auth";
+import { auth } from "../firebaseConfig";
 
 const LoginPage: React.FC = () => {
     const [username, setUsername] = useState<string>("");
     const [password, setPassword] = useState<string>("");
     const [marina, setMarina] = useState<number>(0);
+    const [error, setError] = useState<string | null>(null);
     const navigate = useNavigate();
 
     const logos = [payneLogo, desmasdonsLogo, beaconLogo];
     const logoColour = ["#3272B4", "#223867", "#222674"];
 
-    const handleLogin = (e: React.FormEvent<HTMLFormElement>): void => {
+    const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        console.log("Logging in with", username, password);
-        navigate('/dashboard');
+        try {
+            await signInWithEmailAndPassword(auth, username, password);
+            navigate('/dashboard');
+        } catch (err: any) {
+            setError("Invalid username or password.");
+            console.error("Login error:", err.message);
+        }
     };
 
     const lightTheme = createTheme({
         palette: {
-            mode: "light", // Force light mode
-            background: {
-                default: "#f4f7fa", // Light gray background
-                paper: "#ffffff", // White background for the login box
-            },
-            text: {
-                primary: "#000000", // Ensure text stays black
-            },
+            mode: "light",
+            background: { default: "#f4f7fa", paper: "#ffffff" },
+            text: { primary: "#000000" },
         },
     });
 
@@ -47,53 +50,33 @@ const LoginPage: React.FC = () => {
                         borderRadius: 2,
                         boxShadow: 3,
                         display: 'flex',
-                        justifyContent: 'center',
                         flexDirection: 'column',
                         alignItems: 'center',
                     }}
                 >
                     <img src={logos[marina]} width="40%" alt="Logo" />
 
-                    <Typography
-                        variant="h3"
-                        gutterBottom
-                        padding="20px"
-                        sx={{
-                            fontWeight: "bold",
-                            color: logoColour[marina],
-                        }}
-                    >
+                    <Typography variant="h3" gutterBottom padding="20px" sx={{ fontWeight: "bold", color: logoColour[marina] }}>
                         Welcome
                     </Typography>
 
                     <form onSubmit={handleLogin} style={{ width: "80%" }}>
-                        <Box sx={{
-                            display: 'flex',
-                            justifyContent: 'center',
-                        }}>
-                            <Select
-                                labelId="marina-select"
-                                id="marina-select"
-                                value={marina}
-                                onChange={(event) => setMarina(event.target.value as number)}
-                            >
+                        <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
+                            <Select value={marina} onChange={(e) => setMarina(e.target.value as number)} fullWidth>
                                 <MenuItem value={0}>Payne Marine</MenuItem>
                                 <MenuItem value={1}>Desmasdon's Boat Works</MenuItem>
                                 <MenuItem value={2}>Beacon Marine</MenuItem>
                             </Select>
-
                         </Box>
 
-
                         <TextField
-                            label="Username"
+                            label="Email"
                             variant="outlined"
                             fullWidth
                             margin="normal"
                             required
-                            type="username"
                             value={username}
-                            onChange={(e) => { setUsername(e.target.value) }}
+                            onChange={(e) => setUsername(e.target.value)}
                         />
 
                         <TextField
@@ -104,8 +87,14 @@ const LoginPage: React.FC = () => {
                             required
                             type="password"
                             value={password}
-                            onChange={(e) => { setPassword(e.target.value) }}
+                            onChange={(e) => setPassword(e.target.value)}
                         />
+
+                        {error && (
+                            <Typography variant="body2" color="error" sx={{ mt: 1 }}>
+                                {error}
+                            </Typography>
+                        )}
 
                         <Button
                             variant="contained"
@@ -116,9 +105,7 @@ const LoginPage: React.FC = () => {
                                 mt: 2,
                                 borderRadius: '10px',
                                 backgroundColor: logoColour[marina],
-                                '&:hover': {
-                                    backgroundColor: '#015da9',
-                                },
+                                '&:hover': { backgroundColor: '#015da9' },
                             }}
                         >
                             Login
