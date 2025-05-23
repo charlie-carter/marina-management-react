@@ -1,4 +1,4 @@
-/*
+
   Copyright © 2025 Charlie Carter
   All rights reserved.
 
@@ -6,4 +6,4 @@
   via any medium, is strictly prohibited.
 
   For licensing inquiries, contact: csc115@outlook.com
-*/
+
