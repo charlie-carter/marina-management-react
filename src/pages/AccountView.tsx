@@ -1,4 +1,15 @@
-import React, { useEffect, useState } from "react";
+/*
+  Copyright © 2025 Charlie Carter
+  All rights reserved.
+
+  This file is part of DockDesk.
+  Unauthorized copying, modification, or distribution of this software,
+  via any medium, is strictly prohibited.
+
+  For licensing inquiries, contact: csc115@outlook.com
+*/
+
+import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
     doc,
@@ -27,14 +38,15 @@ import {
     Grid,
     TextField,
 } from "@mui/material";
+import {AccountStructure, CarStructure, ChargeStructure} from "../types.ts";
 
 const AccountView = () => {
     const { id } = useParams();
     const navigate = useNavigate();
 
-    const [account, setAccount] = useState<any>(null);
-    const [editableAccount, setEditableAccount] = useState<any>(null);
-    const [cars, setCars] = useState<any[]>([]);
+    const [account, setAccount] = useState<AccountStructure>();
+    const [editableAccount, setEditableAccount] = useState<AccountStructure>();
+    const [charges, setCharges] = useState<ChargeStructure[]>([]);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
@@ -50,26 +62,43 @@ const AccountView = () => {
                     setAccount(accountData);
                     setEditableAccount(accountData);
 
-                    const guestCarsQuery = query(
-                        collection(db, "guestCars"),
+                    const chargeQuery = query(
+                        collection(db, "charges"),
                         where("account", "==", accountRef)
                     );
-                    const guestCarsSnap = await getDocs(guestCarsQuery);
+                    const chargeSnap = await getDocs(chargeQuery);
 
-                    const guestCarsData = await Promise.all(
-                        guestCarsSnap.docs.map(async (docSnap) => {
-                            const guestCar = docSnap.data();
-                            const carRef = guestCar.carRef;
-                            const carSnap = await getDoc(carRef);
+                    const chargeData = await Promise.all(
+                        chargeSnap.docs.map(async (docSnap) => {
+                            const charge = docSnap.data();
+
+                            const chargeDoc = await getDoc(charge.ref);
+                            let amount: number = -99;
+                            let link: string = "";
+                            if (chargeDoc.exists()) {
+                                if (charge.type === "GAS") {
+                                    const data = chargeDoc.data() as { amount: number};
+                                    amount = data.amount;
+                                    link = `/gas-details/${docSnap.id}`
+                                } else if (charge.type === "PARKING") {
+                                    const data = chargeDoc.data() as { daysStayed: number};
+                                    amount = data.daysStayed;
+                                    link = `/car-details/${docSnap.id}`
+                                }
+
+                            }
+
                             return {
                                 id: docSnap.id,
-                                ...guestCar,
-                                carDetails: carSnap.exists() ? carSnap.data() : {},
+                                ...charge,
+                                amount,
+                                link
+
                             };
                         })
                     );
 
-                    setCars(guestCarsData);
+                    setCharges(chargeData);
                 }
             } catch (error) {
                 console.error("Error fetching account:", error);
@@ -251,35 +280,33 @@ const AccountView = () => {
             </Paper>
 
             <Typography variant="h6" fontWeight="bold" gutterBottom>
-                Parking History
+                Account History
             </Typography>
             <Divider sx={{ mb: 2 }} />
 
             <TableContainer component={Paper} sx={{ borderRadius: 3 }}>
-                <Table size="small">
+                <Table size="small" onClick={navigate()}>
                     <TableHead sx={{ backgroundColor: "#f5f5f5" }}>
                         <TableRow>
-                            <TableCell><strong>License Plate</strong></TableCell>
-                            <TableCell><strong>Entry Date</strong></TableCell>
-                            <TableCell><strong>Exit Date</strong></TableCell>
-                            <TableCell><strong>Days Stayed</strong></TableCell>
-                            <TableCell><strong>On Account?</strong></TableCell>
+                            <TableCell><strong>Type</strong></TableCell>
+                            <TableCell><strong>Amount</strong></TableCell>
+                            <TableCell><strong>Date Paid</strong></TableCell>
+                            <TableCell><strong>Status</strong></TableCell>
                         </TableRow>
                     </TableHead>
                     <TableBody>
-                        {cars.length > 0 ? (
-                            cars.map((car, index) => (
-                                <TableRow key={car.id} sx={{ backgroundColor: index % 2 === 0 ? "#fafafa" : "white" }}>
-                                    <TableCell>{car.carDetails.licensePlate || "Unknown"}</TableCell>
-                                    <TableCell>{car.entryDate?.split("T")[0]}</TableCell>
-                                    <TableCell>{car.exitDate ? car.exitDate.split("T")[0] : "N/A"}</TableCell>
-                                    <TableCell>{car.daysStayed ?? "N/A"}</TableCell>
-                                    <TableCell>{car.onAccount ? "Charged to Account" : "Not on Account"}</TableCell>
+                        {charges.length > 0 ? (
+                            charges.map((charge, index) => (
+                                <TableRow key={charge.id} sx={{ backgroundColor: charge.paid ? index % 2 === 0 ? "#fafafa" : "white" : "red" }}>
+                                    <TableCell>{charge.type || "Unknown"}</TableCell>
+                                    <TableCell>{charge.type === "GAS" ? charge.amount + " Litres" : charge.amount + " Days"}</TableCell>
+                                    <TableCell>{charge.paidAt ? charge.paidAt: "N/A"}</TableCell>
+                                    <TableCell>{charge.paid ? "Paid" : "Unpaid"}</TableCell>
                                 </TableRow>
                             ))
                         ) : (
                             <TableRow>
-                                <TableCell colSpan={5} align="center">No parking history found.</TableCell>
+                                <TableCell colSpan={5} align="center">No account history found.</TableCell>
                             </TableRow>
                         )}
                     </TableBody>

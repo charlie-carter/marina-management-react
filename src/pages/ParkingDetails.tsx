@@ -1,3 +1,14 @@
+/*
+  Copyright © 2025 Charlie Carter
+  All rights reserved.
+
+  This file is part of DockDesk.
+  Unauthorized copying, modification, or distribution of this software,
+  via any medium, is strictly prohibited.
+
+  For licensing inquiries, contact: csc115@outlook.com
+*/
+
 import React, { useEffect, useState } from "react";
 import {Link, useLocation, useNavigate} from "react-router-dom";
 import {
@@ -11,22 +22,32 @@ import {
     DialogContent, DialogContentText, DialogActions, TextField
 } from "@mui/material";
 import AddIcon from '@mui/icons-material/Add';
-import { doc, getDoc, updateDoc } from "firebase/firestore";
+import {doc, DocumentReference, getDoc, updateDoc} from "firebase/firestore";
 import { db } from "../firebaseConfig";
 import {AdapterDayjs} from "@mui/x-date-pickers/AdapterDayjs";
 import {DesktopDatePicker} from "@mui/x-date-pickers";
 import dayjs from "dayjs";
 import {LocalizationProvider} from "@mui/x-date-pickers/LocalizationProvider";
+import {CarStructure, GuestParkingStructure} from "../types.ts";
 
 const ParkingDetails: React.FC = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const parkingId = location.state?.parkingId; // Extract correctly
-
-
-    const [exitDate, setExitDate] = useState<dayjs.Dayjs | null>(null);
-    const [parking, setParking] = useState<any>(null);
-    const [car, setCar] = useState<any>(null);
+    const [exitDate, setExitDate] = useState<dayjs.Dayjs>(dayjs());
+    const [parking, setParking] = useState<GuestParkingStructure>({
+        account: {} as DocumentReference,
+        carRef: {} as DocumentReference,
+        daysStayed: 0,
+        entryDate: "",
+        exitDate: "",
+        paymentInfo: {
+            method: "",
+            daysPaidFor: 0,
+            chargedDate: "",
+        },
+    });
+    const [car, setCar] = useState<CarStructure>();
     const [openConfirmGone, setOpenConfirmGone] = useState(false);
     const [openMarkPaid, setOpenMarkPaid] = useState(false);
     const [numDaysPaid, setNumDaysPaid] = useState("");
@@ -40,19 +61,19 @@ const ParkingDetails: React.FC = () => {
                 const parkingSnap = await getDoc(parkingRef);
 
                 if (parkingSnap.exists()) {
-                    const parkingData = parkingSnap.data();
+                    const parkingData = parkingSnap.data() as GuestParkingStructure;
                     setParking(parkingData);
 
                     setExitDate(dayjs(parkingData.exitDate));
 
 
-                    if (parkingData.carRef) {  // Ensure carRef exists
+                    if (parkingData.carRef) {
 
                         const carDocReference = doc(db, "cars", parkingData.carRef.id); // Fix here
                         const carSnap = await getDoc(carDocReference);
 
                         if (carSnap.exists()) {
-                            setCar(carSnap.data());
+                            setCar(carSnap.data() as CarStructure);
                         }
                     }
 
@@ -107,7 +128,7 @@ const ParkingDetails: React.FC = () => {
                     daysStayed: updatedDaysStayed
                 });
 
-                setParking((prev) => ({
+                setParking((prev: GuestParkingStructure) => ({
                     ...prev,
                     daysStayed: updatedDaysStayed,
                 }));
@@ -125,7 +146,7 @@ const ParkingDetails: React.FC = () => {
 
             if (parkingSnap.exists()) {
                 await updateDoc(parkingRef, {
-                    active: false,
+                    status: "departed",
                     exitDate: exitDate.toISOString()
                 });
 
@@ -153,27 +174,26 @@ const ParkingDetails: React.FC = () => {
     const handleMarkPaid = async () => {
         try {
             const parkingRef = doc(db, "guestCars", parkingId);
-            const parkingSnap = await getDoc(parkingRef);
+            const updatedPaymentInfo = {
+                ...parking.paymentInfo,
+                method: "prepaid",
+                daysPaidFor: parseInt(numDaysPaid),
+                chargedDate: new Date().toISOString(),
+            };
 
-            if (parkingSnap.exists()) {
-                const updatedDaysPaid = numDaysPaid;
+            await updateDoc(parkingRef, {
+                paymentInfo: updatedPaymentInfo
+            });
 
-                await updateDoc(parkingRef, {
-                    prepaidDays: updatedDaysPaid,
-                    prepaid: true
-                });
-
-                setParking((prev) => ({
-                    ...prev,
-                    prepaidDays: updatedDaysPaid,
-                    prepaid: true,
-                }));
-
-            }
+            setParking((prev) => ({
+                ...prev,
+                paymentInfo: updatedPaymentInfo,
+            }));
         } catch (error) {
             console.error("Error marking as paid", error);
         }
-    }
+    };
+
 
     const handleOpenMarkPaid = () => {
         setOpenMarkPaid(true);
@@ -189,9 +209,10 @@ const ParkingDetails: React.FC = () => {
     };
 
     const paidDetails = () => {
-        if (parking.prepaid) {
-            return `Paid for ${parking.prepaidDays} days.`;
-        } else if (parking.onAccount && parking.account?.id) {
+        const method = parking.paymentInfo?.method;
+        if (method === "prepaid") {
+            return `Paid for ${parking.paymentInfo.daysPaidFor} days.`;
+        } else if (method === "account") {
             return (
                 <span>
                 To be charged on account:{" "}
@@ -201,27 +222,32 @@ const ParkingDetails: React.FC = () => {
             </span>
             );
         } else {
-            return "Unpaid for";
+            return "Unpaid";
         }
     };
 
+
     const paidWarning = () => {
-        if (parking.onAccount) {
-            return "Warning! This parking is to be charged out to account: " + parking.account.id + "\n Please ensure this car has been charged out before marking as gone."
-        } else if (parking.prepaid) {
-            return "Are you sure you want to mark this car as gone? This action cannot be undone."
+        const method = parking.paymentInfo?.method;
+        if (method === "account") {
+            return `Warning! This parking is to be charged out to account: ${parking.account?.id}. Please ensure it has been charged before marking as gone.`;
+        } else if (method === "prepaid") {
+            return "Are you sure you want to mark this car as gone? This action cannot be undone.";
         } else {
-            return "Warning! This parking has not been paid for yet! Are you sure you want to mark this car as gone?"
+            return "Warning! This parking has not been paid for yet! Are you sure you want to mark this car as gone?";
         }
-    }
+    };
+
 
     const paidButton = () => {
-        if (!parking.prepaid && !parking.onAccount) {
-            return <Button variant="contained" onClick={handleOpenMarkPaid} sx={{width: '90%', margin: 2}}>Mark As Paid</Button>
-        } else if (parking.prepaid && !parking.onAccount) {
-            return <Button variant="contained" onClick={handleOpenMarkPaid} sx={{width: '90%', margin: 2}}>Update Days Paid</Button>
+        const method = parking.paymentInfo?.method;
+        if (method !== "prepaid" && method !== "account") {
+            return <Button variant="contained" onClick={handleOpenMarkPaid} sx={{ width: '90%', margin: 2 }}>Mark As Paid</Button>;
+        } else if (method === "prepaid") {
+            return <Button variant="contained" onClick={handleOpenMarkPaid} sx={{ width: '90%', margin: 2 }}>Update Days Paid</Button>;
         }
-    }
+    };
+
 
     if (!car) {
         return (
@@ -307,7 +333,7 @@ const ParkingDetails: React.FC = () => {
                             <DesktopDatePicker
                                 label="Departure"
                                 value={exitDate}
-                                onChange={(date) => setExitDate(date)}
+                                onChange={(date) => setExitDate(date as dayjs.Dayjs)}
                             />
                         </LocalizationProvider>
                     </Box>

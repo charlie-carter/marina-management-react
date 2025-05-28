@@ -1,3 +1,14 @@
+/*
+  Copyright © 2025 Charlie Carter
+  All rights reserved.
+
+  This file is part of DockDesk.
+  Unauthorized copying, modification, or distribution of this software,
+  via any medium, is strictly prohibited.
+
+  For licensing inquiries, contact: csc115@outlook.com
+*/
+
 import React, { useState } from 'react';
 import {
     Container, TextField, Button, Typography, Box, Select, MenuItem,
@@ -6,7 +17,6 @@ import {
 import payneLogo from "../assets/payne-logo.png";
 import beaconLogo from "../assets/beacon-logo.png";
 import desmasdonsLogo from "../assets/desmasdons-logo.png";
-import '@fontsource/roboto';
 import { useNavigate } from "react-router-dom";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "../firebaseConfig";
@@ -26,9 +36,9 @@ const LoginPage: React.FC = () => {
         try {
             await signInWithEmailAndPassword(auth, username, password);
             navigate('/dashboard');
-        } catch (err: any) {
+        } catch (e) {
             setError("Invalid username or password.");
-            console.error("Login error:", err.message);
+            console.error("Login error:", e);
         }
     };
 

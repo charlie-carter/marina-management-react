@@ -1,8 +1,20 @@
+/*
+  Copyright © 2025 Charlie Carter
+  All rights reserved.
+
+  This file is part of DockDesk.
+  Unauthorized copying, modification, or distribution of this software,
+  via any medium, is strictly prohibited.
+
+  For licensing inquiries, contact: csc115@outlook.com
+*/
+
 import React, {useEffect, useState} from "react";
 import {db} from "../firebaseConfig";
 import {collection, getDoc, onSnapshot} from "firebase/firestore";
 import {Container, Typography, Paper} from "@mui/material";
 import {DataGrid, GridColDef} from "@mui/x-data-grid";
+import {AccountStructure, CarStructure, GuestParkingStructure} from "../types.ts";
 
 const columns: GridColDef[] = [
     {field: "licensePlate", headerName: "License Plate", width: 150},
@@ -16,7 +28,7 @@ const columns: GridColDef[] = [
 ];
 
 const ParkingArchive: React.FC = () => {
-    const [guestCars, setGuestCars] = useState<any[]>([]);
+    const [guestCars, setGuestCars] = useState<GuestParkingStructure[]>([]);
 
     useEffect(() => {
         const unsubscribe = onSnapshot(collection(db, "guestCars"), async (snapshot) => {
@@ -24,7 +36,7 @@ const ParkingArchive: React.FC = () => {
                 snapshot.docs.map(async (docSnapshot) => {
                     const car = docSnapshot.data();
 
-                    if (car.active === true) return null;
+                    if (car.status === "active") return null;
 
                     let accountName = "No Account";
                     let carMake = "Unknown";
@@ -39,7 +51,7 @@ const ParkingArchive: React.FC = () => {
                         try {
                             const accountDoc = await getDoc(car.account);
                             if (accountDoc.exists()) {
-                                const accountData = accountDoc.data();
+                                const accountData: AccountStructure = accountDoc.data() as AccountStructure;
                                 accountName = `${accountData.fName || ""} ${accountData.lName || ""}`.trim();
                             }
                         } catch (error) {
@@ -51,7 +63,7 @@ const ParkingArchive: React.FC = () => {
                         try {
                             const carDoc = await getDoc(car.carRef);
                             if (carDoc.exists()) {
-                                const carInfo = carDoc.data();
+                                const carInfo: CarStructure = carDoc.data() as CarStructure;
                                 licensePlate = `${carInfo.licensePlate}`;
                                 carMake = `${carInfo.make}`;
                                 carType = `${carInfo.type}`;

@@ -1,8 +1,18 @@
+/*
+  Copyright © 2025 Charlie Carter
+  All rights reserved.
+
+  This file is part of DockDesk.
+  Unauthorized copying, modification, or distribution of this software,
+  via any medium, is strictly prohibited.
+
+  For licensing inquiries, contact: csc115@outlook.com
+*/
+
 import React, {useState, useEffect} from "react";
 import {useNavigate} from "react-router-dom";
 import {db} from "../firebaseConfig";
-import {collection, addDoc, doc, getDoc, setDoc, query, where, getDocs} from "firebase/firestore";
-import {green, pink} from '@mui/material/colors';
+import {collection, addDoc, doc, setDoc, query, where, getDocs} from "firebase/firestore";
 import {
     Container,
     TextField,
@@ -22,6 +32,7 @@ import {DesktopDatePicker} from '@mui/x-date-pickers';
 import {AdapterDayjs} from '@mui/x-date-pickers/AdapterDayjs';
 import {LocalizationProvider} from "@mui/x-date-pickers/LocalizationProvider";
 import { MuiTelInput } from 'mui-tel-input'
+import {Today} from "@mui/icons-material";
 
 const carColours = ["Black", "White", "Silver", "Grey", "Blue", "Red", "Green", "Yellow", "Beige"];
 const carTypes = ["Sedan", "SUV", "Truck", "Minivan", "Van"];
@@ -41,7 +52,8 @@ const AddGuestCar: React.FC = () => {
     const [prepaid, setPrepaid] = useState(false);
     const [daysPaid, setDaysPaid] = useState("");
     const [notes, setNotes] = useState("");
-    const [lastAccount, setLastAccount] = useState("")
+    const [lastAccount, setLastAccount] = useState("");
+
 
     const navigate = useNavigate();
     const carMakes = commonCarMakes;
@@ -129,17 +141,22 @@ const AddGuestCar: React.FC = () => {
                 }
             }
 
-            // Add guest car entry referencing the car
+            const paymentInfo = {
+                method: prepaid ? 'prepaid' : onAccount ? 'account' : 'unpaid',
+                daysPaidFor: prepaid? daysPaid: 0,
+                chargedDate: prepaid? Today.toString() : null,
+
+            }
+
+
             const guestCarData = {
                 carRef,
+                account: selectedAccount ? doc(db, "accounts", selectedAccount) : null,
                 entryDate: entryDate.toISOString(),
                 exitDate: exitDate ? exitDate.toISOString() : null,
                 daysStayed: 1,
-                account: selectedAccount ? doc(db, "accounts", selectedAccount) : null,
-                active: true,
-                prepaid: prepaid,
-                onAccount: onAccount,
-                prepaidDays: prepaid ? daysPaid : 0,
+                paymentInfo: paymentInfo,
+                status: "active"
             };
 
             await addDoc(collection(db, "guestCars"), guestCarData);

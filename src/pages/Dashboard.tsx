@@ -1,15 +1,26 @@
+/*
+  Copyright © 2025 Charlie Carter
+  All rights reserved.
+
+  This file is part of DockDesk.
+  Unauthorized copying, modification, or distribution of this software,
+  via any medium, is strictly prohibited.
+
+  For licensing inquiries, contact: csc115@outlook.com
+*/
+
 import React, { useState } from "react";
 import { Toolbar, Typography, Drawer, List, ListItem, ListItemText, CssBaseline, Box, Button, Divider, ListItemButton } from "@mui/material";
-import GasCharges from "../pages/GasCharges";
 import ActiveGuestCarsPage from "../pages/ActiveGuestCarsPage.tsx";
 import AccountsPage from "../pages/AccountsPage.tsx";
 import {useNavigate} from "react-router-dom";
 import ParkingArchive from "./ParkingArchive.tsx";
+import ChargesView from "./ChargesView.tsx";
 
 
 const menuItems = [
     { label: "Actively Parked Cars", key: "parkedCars", component: <ActiveGuestCarsPage /> },
-    { label: "Recent Gas Charges", key: "gasCharges", component: <GasCharges /> },
+    { label: "To Charge Out", key: "charges", component: <ChargesView /> },
     { label: "All Accounts", key: "accounts", component: <AccountsPage /> },
     { label: "Parking Archive", key: "archive", component: <ParkingArchive /> },
 

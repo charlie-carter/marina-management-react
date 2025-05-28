@@ -1,9 +1,21 @@
+/*
+  Copyright © 2025 Charlie Carter
+  All rights reserved.
+
+  This file is part of DockDesk.
+  Unauthorized copying, modification, or distribution of this software,
+  via any medium, is strictly prohibited.
+
+  For licensing inquiries, contact: csc115@outlook.com
+*/
+
 import React, {useEffect, useState} from "react";
 import {useNavigate} from "react-router-dom";
 import {db} from "../firebaseConfig";
 import {collection, getDoc, onSnapshot} from "firebase/firestore";
 import {Container, Typography, Paper, Grid, Button} from "@mui/material";
 import {DataGrid, GridColDef} from "@mui/x-data-grid";
+import {AccountStructure, CarStructure, GuestParkingStructure} from "../types.ts";
 
 const columns: GridColDef[] = [
     // To add a photo field
@@ -21,17 +33,18 @@ const columns: GridColDef[] = [
     //     sortable: false,
     //     filterable: false,
     // },
-    {field: "licensePlate", headerName: "License Plate", width: 150},
+    {field: "licensePlate", headerName: "License Plate", width: 110},
     {field: "ownerName", headerName: "Owner Name", width: 180},
-    {field: "carColour", headerName: "Colour", width: 100},
-    {field: "carMake", headerName: "Make", width: 100},
+    {field: "carColour", headerName: "Colour", width: 90},
+    {field: "carMake", headerName: "Make", width: 110},
     {field: "carType", headerName: "Type", width: 100},
     {field: "entryDateFormatted", headerName: "Entry Date", width: 130},
-    {field: "accountName", headerName: "Account", width: 200},
+    {field: "accountName", headerName: "Account", width: 180},
+    {field: "paymentInfo", headerName: "Payment", width: 100},
 ];
 
 const ActiveGuestCarsPage: React.FC = () => {
-    const [guestCars, setGuestCars] = useState<any[]>([]);
+    const [guestCars, setGuestCars] = useState<GuestParkingStructure[]>([]);
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -42,7 +55,7 @@ const ActiveGuestCarsPage: React.FC = () => {
                         const car = docSnapshot.data();
 
                         // Ignore inactive cars
-                        if (car.active === false) return null;
+                        if (car.status === "departed") return null;
 
                         let accountName = "No Account";
                         let carMake = "Unknown";
@@ -51,12 +64,13 @@ const ActiveGuestCarsPage: React.FC = () => {
                         let licensePlate = "Unknown";
                         let ownerName = "Unknown";
                         let entryDateFormatted = "Unknown";
+                        let paymentInfo = "Unknown";
 
                         if (car.account) {
                             try {
                                 const accountDoc = await getDoc(car.account);
                                 if (accountDoc.exists()) {
-                                    const accountData = accountDoc.data();
+                                    const accountData: AccountStructure = accountDoc.data() as AccountStructure;
                                     accountName = `${accountData.fName || ""} ${accountData.lName || ""}`.trim();
                                 }
                             } catch (error) {
@@ -68,12 +82,13 @@ const ActiveGuestCarsPage: React.FC = () => {
                             try {
                                 const carDoc = await getDoc(car.carRef);
                                 if (carDoc.exists()) {
-                                    const carInfo = carDoc.data();
+                                    const carInfo: CarStructure = carDoc.data() as CarStructure;
                                     licensePlate = `${carInfo.licensePlate}`;
                                     carMake = `${carInfo.make}`;
                                     carType = `${carInfo.type}`;
                                     carColour = `${carInfo.colour}`;
                                     ownerName = `${carInfo.ownerName}`;
+
                                 }
                             } catch (error) {
                                 console.error("Error fetching car:", error);
@@ -89,6 +104,11 @@ const ActiveGuestCarsPage: React.FC = () => {
                             });
                         }
 
+                        paymentInfo = `${car.paymentInfo.method}`;
+                        if (paymentInfo === 'account') {
+                            paymentInfo = "On Account";
+                        }
+
                         return {
                             id: docSnapshot.id,
                             ...car,
@@ -99,6 +119,7 @@ const ActiveGuestCarsPage: React.FC = () => {
                             carColour,
                             ownerName,
                             entryDateFormatted,
+                            paymentInfo,
                         };
                     })
             );
