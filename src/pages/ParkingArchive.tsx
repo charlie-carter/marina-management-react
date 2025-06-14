@@ -14,7 +14,7 @@ import {db} from "../firebaseConfig";
 import {collection, getDoc, onSnapshot} from "firebase/firestore";
 import {Container, Typography, Paper} from "@mui/material";
 import {DataGrid, GridColDef} from "@mui/x-data-grid";
-import {AccountStructure, CarStructure, GuestParkingStructure} from "../types.ts";
+import {AccountStructure, CarStructure, GuestParkingDisplay} from "../types.ts";
 
 const columns: GridColDef[] = [
     {field: "licensePlate", headerName: "License Plate", width: 150},
@@ -28,7 +28,7 @@ const columns: GridColDef[] = [
 ];
 
 const ParkingArchive: React.FC = () => {
-    const [guestCars, setGuestCars] = useState<GuestParkingStructure[]>([]);
+    const [guestCars, setGuestCars] = useState<GuestParkingDisplay[]>([]);
 
     useEffect(() => {
         const unsubscribe = onSnapshot(collection(db, "guestCars"), async (snapshot) => {

@@ -13,7 +13,7 @@ import React from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import LoginPage from "./pages/LoginPage";
 import Dashboard from "./pages/Dashboard";
-import AccountView from "./pages/AccountView";
+import AccountView from "./pages/AccountView.tsx";
 import ParkingDetails from "./pages/ParkingDetails";
 import AddGuestCar from "./pages/AddGuestCar";
 import AddAccount from "./pages/AddAccount";

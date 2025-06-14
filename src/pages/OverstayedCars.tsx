@@ -11,10 +11,10 @@
 
 import React, {useEffect, useState} from "react";
 import {db} from "../firebaseConfig";
-import {collection, getDoc, onSnapshot} from "firebase/firestore";
+import {collection, getDoc, onSnapshot, query, where} from "firebase/firestore";
 import {Container, Typography, Paper} from "@mui/material";
 import {DataGrid, GridColDef} from "@mui/x-data-grid";
-import {AccountStructure, CarStructure, GuestParkingStructure, OverstayedCarsStructure} from "../types.ts";
+import {AccountStructure, CarStructure, OverstayedCarsStructure} from "../types.ts";
 import {useNavigate} from "react-router-dom";
 
 const columns: GridColDef[] = [
@@ -35,22 +35,26 @@ const OverstayedCars: React.FC = () => {
     const navigate = useNavigate();
 
     useEffect(() => {
-        const unsubscribe = onSnapshot(collection(db, "guestCars"), async (snapshot) => {
-            const carData = await Promise.all(
+        const guestCarsQuery = query(
+            collection(db, "guestCars"),
+            where("paymentInfo.method", "==", "prepaid")
+        );
+
+        const unsubscribe = onSnapshot(guestCarsQuery, async (snapshot) => {
+            const rawCarData = await Promise.all(
                 snapshot.docs.map(async (docSnapshot) => {
-                    // Change query to only grab prepaid cars.
                     const car = docSnapshot.data();
 
-                    if (car.status === "active") return null;
+                    const daysStayed = car.daysStayed || 0;
+                    const daysPaid = car.paymentInfo?.daysPaidFor || 0;
+
+                    if (daysStayed <= daysPaid) return null;
 
                     let accountName = "No Account";
                     let carMake = "Unknown";
-                    let carColour = "Unknown";
                     let licensePlate = "Unknown";
                     let ownerName = "Unknown";
-                    const daysStayed = car.daysStayed;
-                    const daysPaid = car.paymentInfo.daysPaidFor;
-                    const status = (car.status === "active" ? "Still Parked" : "Departed");
+                    let carType = car.carType || "Unknown";
                     let exitDateFormatted = "Unknown";
 
                     if (car.account) {
@@ -70,10 +74,10 @@ const OverstayedCars: React.FC = () => {
                             const carDoc = await getDoc(car.carRef);
                             if (carDoc.exists()) {
                                 const carInfo: CarStructure = carDoc.data() as CarStructure;
-                                licensePlate = `${carInfo.licensePlate}`;
-                                carMake = `${carInfo.make}`;
-                                carColour = `${carInfo.colour}`;
-                                ownerName = `${carInfo.ownerName}`;
+                                licensePlate = carInfo.licensePlate || "Unknown";
+                                carMake = carInfo.make || "Unknown";
+                                ownerName = carInfo.ownerName || "Unknown";
+                                carType = carInfo.type || "Unknown";
                             }
                         } catch (error) {
                             console.error("Error fetching car:", error);
@@ -91,23 +95,23 @@ const OverstayedCars: React.FC = () => {
 
                     return {
                         id: docSnapshot.id,
-                        ...car,
+                        car,
                         accountName,
+                        ownerName,
                         licensePlate,
                         carMake,
-                        carColour,
-                        ownerName,
-                        daysPaid,
+                        carType,
                         daysStayed,
+                        daysPaid,
+                        status: car.status === "active" ? "Still Parked" : "Departed",
                         exitDateFormatted,
-                        status,
-                    };
+                    } satisfies OverstayedCarsStructure;
                 })
             );
 
-            setGuestCars(carData.filter(car => car.daysStayed > car.daysPaid));
+            const cleaned = rawCarData.filter((c): c is OverstayedCarsStructure => c !== null);
+            setGuestCars(cleaned);
         });
-
 
         return () => unsubscribe();
     }, []);
@@ -116,7 +120,7 @@ const OverstayedCars: React.FC = () => {
     return (
         <Container>
             <Typography variant="h4" gutterBottom>
-                Guest Parking Archive
+                Overstayed Cars
             </Typography>
 
             <Paper sx={{padding: 2}}>

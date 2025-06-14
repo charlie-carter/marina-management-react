@@ -1,6 +1,6 @@
-import {DocumentReference} from "firebase/firestore";
-import firebase from "firebase/compat";
-import DocumentSnapshot = firebase.firestore.DocumentSnapshot;
+import {DocumentData, DocumentReference, Timestamp} from "firebase/firestore";
+
+
 
 export interface CarStructure {
     colour: string;
@@ -15,7 +15,7 @@ export interface CarStructure {
 }
 
 export interface ParkingPaymentStructure {
-    chargedDate: string;
+    chargedDate: Timestamp;
     daysPaidFor: number;
     method: string;
 }
@@ -24,30 +24,31 @@ export interface GuestParkingStructure {
     account: DocumentReference;
     carRef: DocumentReference;
     daysStayed: number;
-    entryDate: string;
-    exitDate: string;
+    entryDate: Timestamp;
+    exitDate: Timestamp;
     paymentInfo: ParkingPaymentStructure;
 }
 
 export interface ChargeStructure {
     id?: string;
     account: string;
-    paid: boolean;
-    paidAt?: string;
-    ref: DocumentReference;
+    paid?: boolean;
+    paidAt?: Timestamp;
+    ref?: DocumentReference;
     type: string;
     amount?: number;
     link?: string;
 }
 
 export interface AccountStructure {
-    address: AddressStructure
-    balance: number;
-    email: string;
+    id?: string;
+    address?: AddressStructure
+    balance?: number;
+    email?: string;
     fName: string;
     lName: string;
     notes: string;
-    phone: string;
+    phone?: string;
 }
 
 export interface AddressStructure {
@@ -59,7 +60,8 @@ export interface AddressStructure {
 }
 
 export interface OverstayedCarsStructure {
-    id: DocumentReference;
+    id: string;
+    car: DocumentData;
     accountName: string;
     ownerName: string;
     licensePlate: string;
@@ -69,4 +71,17 @@ export interface OverstayedCarsStructure {
     daysPaid: number;
     status: string;
     exitDateFormatted: string;
+}
+
+export interface GuestParkingDisplay {
+    accountName?: string;
+    licensePlate?: string;
+    carMake?: string;
+    carType: string;
+    carColour?: string;
+    ownerName?: string;
+    entryDateFormatted?: string;
+    exitDateFormatted?: string;
+    paymentInfo?: string;
+    id: string;
 }

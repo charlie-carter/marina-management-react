@@ -15,7 +15,7 @@ import {db} from "../firebaseConfig";
 import {collection, getDoc, onSnapshot} from "firebase/firestore";
 import {Container, Typography, Paper, Grid, Button} from "@mui/material";
 import {DataGrid, GridColDef} from "@mui/x-data-grid";
-import {AccountStructure, CarStructure, GuestParkingStructure} from "../types.ts";
+import {AccountStructure, CarStructure, GuestParkingDisplay} from "../types.ts";
 
 const columns: GridColDef[] = [
     // To add a photo field
@@ -44,7 +44,7 @@ const columns: GridColDef[] = [
 ];
 
 const ActiveGuestCarsPage: React.FC = () => {
-    const [guestCars, setGuestCars] = useState<GuestParkingStructure[]>([]);
+    const [guestCars, setGuestCars] = useState<GuestParkingDisplay[]>([]);
     const navigate = useNavigate();
 
     useEffect(() => {

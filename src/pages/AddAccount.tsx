@@ -11,7 +11,7 @@
 
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import {collection, addDoc, doc, setDoc, getDoc} from "firebase/firestore";
+import {doc, setDoc, getDoc} from "firebase/firestore";
 import { db } from "../firebaseConfig"; // Ensure this is your Firebase config
 import { TextField, Button, Container, Typography, Paper, Box } from "@mui/material";
 import {MuiTelInput} from "mui-tel-input";

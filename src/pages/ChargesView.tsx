@@ -83,7 +83,7 @@ const ChargesView: React.FC = () => {
                 })
             );
 
-            setCharges(chargeData);
+            setCharges(chargeData.filter(charge => charge !== null));
         });
 
         return () => unsubscribe();

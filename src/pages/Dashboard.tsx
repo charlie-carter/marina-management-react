@@ -11,28 +11,35 @@
 
 import React, { useState } from "react";
 import { Toolbar, Typography, Drawer, List, ListItem, ListItemText, CssBaseline, Box, Button, Divider, ListItemButton } from "@mui/material";
+import {signOut, getAuth} from "firebase/auth";
 import ActiveGuestCarsPage from "../pages/ActiveGuestCarsPage.tsx";
 import AccountsPage from "../pages/AccountsPage.tsx";
 import {useNavigate} from "react-router-dom";
 import ParkingArchive from "./ParkingArchive.tsx";
 import ChargesView from "./ChargesView.tsx";
+import OverstayedCars from "./OverstayedCars.tsx";
+import payneLogo from "../assets/payne-logo.png";
 
 
 const menuItems = [
     { label: "Actively Parked Cars", key: "parkedCars", component: <ActiveGuestCarsPage /> },
     { label: "To Charge Out", key: "charges", component: <ChargesView /> },
+    { label: "Overstayed Cars", key: "overstayed", component: <OverstayedCars /> },
     { label: "All Accounts", key: "accounts", component: <AccountsPage /> },
     { label: "Parking Archive", key: "archive", component: <ParkingArchive /> },
+
 
 ];
 
 const Dashboard: React.FC = () => {
     const [selectedPage, setSelectedPage] = useState(menuItems[0].key);
     const navigate = useNavigate();
+    const auth = getAuth();
 
     const handleSignOut = () => {
         console.log("Signing out...");
         navigate("/login");
+        signOut(auth);
 
     };
 
@@ -41,9 +48,11 @@ const Dashboard: React.FC = () => {
             <CssBaseline />
             <Drawer variant="permanent" sx={{ width: 280, flexShrink: 0, [`& .MuiDrawer-paper`]: { width: 280, boxSizing: "border-box", display: "flex", flexDirection: "column", justifyContent: "space-between", p: 2 } }}>
                 <Box>
+                    <img src={payneLogo} width="100%" alt="Logo"/>
                     <Toolbar>
-                        <Typography variant="h6" sx={{ fontWeight: "bold" }}>Dashboard</Typography>
+                        <Typography variant="h4" sx={{ fontWeight: "bold", textAlign: "center", flexGrow: 1 }}>DockDesk</Typography>
                     </Toolbar>
+
                     <Divider />
                     <List>
                         {menuItems.map((item) => (
@@ -62,7 +71,11 @@ const Dashboard: React.FC = () => {
                 </Box>
                 <Box sx={{ p: 2 }}>
                     <Button variant="contained" color="primary" fullWidth onClick={handleSignOut}>Sign Out</Button>
+                    <Divider sx={{marginTop: 2, marginBottom: 1.5}}/>
+                    <Typography>© Numana Software 2025</Typography>
                 </Box>
+
+
             </Drawer>
             <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
                 <Toolbar />

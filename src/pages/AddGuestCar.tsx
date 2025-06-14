@@ -12,7 +12,7 @@
 import React, {useState, useEffect} from "react";
 import {useNavigate} from "react-router-dom";
 import {db} from "../firebaseConfig";
-import {collection, addDoc, doc, setDoc, query, where, getDocs} from "firebase/firestore";
+import {collection, addDoc, doc, setDoc, query, where, getDocs, Timestamp} from "firebase/firestore";
 import {
     Container,
     TextField,
@@ -33,6 +33,7 @@ import {AdapterDayjs} from '@mui/x-date-pickers/AdapterDayjs';
 import {LocalizationProvider} from "@mui/x-date-pickers/LocalizationProvider";
 import { MuiTelInput } from 'mui-tel-input'
 import {Today} from "@mui/icons-material";
+import {AccountStructure, CarStructure} from "../types.ts";
 
 const carColours = ["Black", "White", "Silver", "Grey", "Blue", "Red", "Green", "Yellow", "Beige"];
 const carTypes = ["Sedan", "SUV", "Truck", "Minivan", "Van"];
@@ -44,7 +45,7 @@ const AddGuestCar: React.FC = () => {
     const [selectedMake, setSelectedMake] = useState("");
     const [selectedType, setSelectedModel] = useState("");
     const [selectedColour, setSelectedColour] = useState("");
-    const [accounts, setAccounts] = useState<any[]>([]);
+    const [accounts, setAccounts] = useState<AccountStructure[]>([]);
     const [selectedAccount, setSelectedAccount] = useState("");
     const [entryDate, setEntryDate] = useState(dayjs());
     const [exitDate, setExitDate] = useState<dayjs.Dayjs | null>(null);
@@ -61,12 +62,22 @@ const AddGuestCar: React.FC = () => {
     useEffect(() => {
         const fetchAccounts = async () => {
             const querySnapshot = await getDocs(collection(db, "accounts"));
-            const accountData = querySnapshot.docs.map(doc => ({id: doc.id, ...doc.data()}));
+            const accountData: AccountStructure[] = querySnapshot.docs.map(doc => ({
+                id: doc.id,
+                ...(doc.data() as Omit<AccountStructure, "id">),
+            }));
             setAccounts(accountData);
         };
 
         fetchAccounts();
     }, []);
+
+    useEffect(() => {
+        if (!selectedAccount) {
+            setOnAccount(false);
+        }
+    }, [selectedAccount]);
+
 
     const handleLicensePlateChange = async (plate: string) => {
         setLicensePlate(plate);
@@ -96,6 +107,8 @@ const AddGuestCar: React.FC = () => {
             }
         }
     };
+
+
 
     const handleAddCar = async () => {
         try {
@@ -129,10 +142,17 @@ const AddGuestCar: React.FC = () => {
             }
 
             // If car exists, update its notes & lastKnownAccount if needed
-            const updatedFields: Record<string, any> = {};
+            const updatedFields: Partial<CarStructure> = {};
+
             if (existingCarData) {
-                if (existingCarData.notes !== notes) updatedFields.notes = notes;
-                if (selectedAccount && existingCarData.lastKnownAccount?.id !== selectedAccount) {
+                if (existingCarData.notes !== notes) {
+                    updatedFields.notes = notes;
+                }
+
+                if (
+                    selectedAccount &&
+                    existingCarData.lastKnownAccount?.id !== selectedAccount
+                ) {
                     updatedFields.lastKnownAccount = doc(db, "accounts", selectedAccount);
                 }
 
@@ -141,8 +161,9 @@ const AddGuestCar: React.FC = () => {
                 }
             }
 
+
             const paymentInfo = {
-                method: prepaid ? 'prepaid' : onAccount ? 'account' : 'unpaid',
+                method: prepaid ? 'prepaid' : onAccount && selectedAccount ? 'account' : 'unpaid',
                 daysPaidFor: prepaid? daysPaid: 0,
                 chargedDate: prepaid? Today.toString() : null,
 
@@ -152,8 +173,8 @@ const AddGuestCar: React.FC = () => {
             const guestCarData = {
                 carRef,
                 account: selectedAccount ? doc(db, "accounts", selectedAccount) : null,
-                entryDate: entryDate.toISOString(),
-                exitDate: exitDate ? exitDate.toISOString() : null,
+                entryDate: Timestamp.fromDate(entryDate.toDate()),
+                exitDate: exitDate ? Timestamp.fromDate(exitDate.toDate()) : null,
                 daysStayed: 1,
                 paymentInfo: paymentInfo,
                 status: "active"
@@ -251,6 +272,7 @@ const AddGuestCar: React.FC = () => {
                 <FormControl fullWidth margin="normal">
                     <InputLabel>Account (Optional)</InputLabel>
                     <Select value={selectedAccount} onChange={(e) => setSelectedAccount(e.target.value)}>
+                        <MenuItem value="">No Account</MenuItem>
                         {accounts.map((data) => (
                             <MenuItem key={data.id} value={data.id}>
                                 {data.fName} {data.lName}
@@ -283,7 +305,6 @@ const AddGuestCar: React.FC = () => {
                                 checked={prepaid}
                                 onChange={(e) => {setPrepaid(e.target.checked)}}
                                 color='info'
-                                disabled={onAccount}
                             />
                         }
                         label="Prepaid?"
@@ -297,8 +318,9 @@ const AddGuestCar: React.FC = () => {
                         control={
                             <Checkbox
                                 size='large'
-                                checked={onAccount}
+                                checked={selectedAccount !== "" ? onAccount : false}
                                 onChange={(e) => {setOnAccount(e.target.checked)}}
+                                disabled={!selectedAccount}
                                 color='info'
                             />}
                         label="On Account?"

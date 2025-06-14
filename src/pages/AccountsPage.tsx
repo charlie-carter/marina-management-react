@@ -49,7 +49,6 @@ const AccountsPage: React.FC = () => {
                 <DataGrid
                     rows={accounts}
                     columns={columns}
-                    pageSize={5}
                     onRowClick={(params) => navigate(`/account-view/${params.id}`)}
 
                 />

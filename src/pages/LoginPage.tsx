@@ -74,8 +74,8 @@ const LoginPage: React.FC = () => {
                         <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
                             <Select value={marina} onChange={(e) => setMarina(e.target.value as number)} fullWidth>
                                 <MenuItem value={0}>Payne Marine</MenuItem>
-                                <MenuItem value={1}>Desmasdon's Boat Works</MenuItem>
-                                <MenuItem value={2}>Beacon Marine</MenuItem>
+                                {/*<MenuItem value={1}>Desmasdon's Boat Works</MenuItem>*/}
+                                {/*<MenuItem value={2}>Beacon Marine</MenuItem>*/}
                             </Select>
                         </Box>
 

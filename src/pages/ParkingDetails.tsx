@@ -22,7 +22,7 @@ import {
     DialogContent, DialogContentText, DialogActions, TextField
 } from "@mui/material";
 import AddIcon from '@mui/icons-material/Add';
-import {doc, DocumentReference, getDoc, updateDoc} from "firebase/firestore";
+import {doc, DocumentReference, getDoc, updateDoc, Timestamp} from "firebase/firestore";
 import { db } from "../firebaseConfig";
 import {AdapterDayjs} from "@mui/x-date-pickers/AdapterDayjs";
 import {DesktopDatePicker} from "@mui/x-date-pickers";
@@ -39,12 +39,12 @@ const ParkingDetails: React.FC = () => {
         account: {} as DocumentReference,
         carRef: {} as DocumentReference,
         daysStayed: 0,
-        entryDate: "",
-        exitDate: "",
+        entryDate: Timestamp.fromMillis(0),
+        exitDate: Timestamp.fromMillis(0),
         paymentInfo: {
             method: "",
             daysPaidFor: 0,
-            chargedDate: "",
+            chargedDate: Timestamp.fromMillis(0),
         },
     });
     const [car, setCar] = useState<CarStructure>();
@@ -64,7 +64,11 @@ const ParkingDetails: React.FC = () => {
                     const parkingData = parkingSnap.data() as GuestParkingStructure;
                     setParking(parkingData);
 
-                    setExitDate(dayjs(parkingData.exitDate));
+                    if (parkingData.exitDate) {
+                        setExitDate(dayjs(parkingData.exitDate.toDate()))
+                    }
+
+
 
 
                     if (parkingData.carRef) {
@@ -178,7 +182,7 @@ const ParkingDetails: React.FC = () => {
                 ...parking.paymentInfo,
                 method: "prepaid",
                 daysPaidFor: parseInt(numDaysPaid),
-                chargedDate: new Date().toISOString(),
+                chargedDate: Timestamp.now()
             };
 
             await updateDoc(parkingRef, {
@@ -289,8 +293,16 @@ const ParkingDetails: React.FC = () => {
                 <Paper sx={{ p: 3 }}>
                     <Typography variant="h6" fontWeight="bold">Parking Information</Typography>
                     <Typography><strong>Days Parked:</strong> {parking.daysStayed}</Typography>
-                    <Typography><strong>Date Arrived:</strong> {parking.entryDate}</Typography>
-                    <Typography><strong>Date Leaving:</strong> {parking.exitDate ? parking.exitDate : "Unknown"}</Typography>
+                    <Typography><strong>Date Arrived:</strong> {parking.entryDate ? parking.entryDate.toDate().toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric',
+                    }) : "Unknown"}</Typography>
+                    <Typography><strong>Date Leaving:</strong> {parking.exitDate ? parking.exitDate.toDate().toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric',
+                    }) : "Unknown"}</Typography>
 
                     {/* Add/Remove Day Buttons */}
                     <Box sx={{ display: "flex", gap: 2, my: 2 }}>
